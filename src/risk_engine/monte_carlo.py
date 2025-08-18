@@ -106,19 +106,19 @@ class MonteCarloSimulator:
                 means, covariance_matrix, size=(batch_size, time_periods)
             )
             
-            # Reshape to ensure consistent dimensions (batch_size, num_assets, time_periods)
+
             if base_returns.ndim == 3:
-                # Already in correct shape
+
                 pass
             elif base_returns.ndim == 2 and len(means) == 1:
-                # Single asset case, reshape from (batch_size, time_periods) to (batch_size, 1, time_periods)
+
                 base_returns = base_returns.reshape(batch_size, 1, time_periods)
             elif base_returns.ndim == 2:
-                # Reshape from (batch_size, num_assets*time_periods) to (batch_size, num_assets, time_periods)
+
                 base_returns = base_returns.reshape(batch_size, len(means), time_periods)
         except Exception as e:
             logger.error(f"Error generating base returns: {e}")
-            # Return empty results to avoid concatenation errors later
+
             return {scenario_name: np.array([]) for scenario_name in scenarios.keys()}
         
         for scenario_name, scenario_params in scenarios.items():
@@ -302,28 +302,28 @@ class MonteCarloSimulator:
     def define_standard_scenarios(self) -> Dict[str, Dict]:
         scenarios = {
             'base_case': {
-                'description': 'Base case scenario with historical parameters',
+
                 'mean_shift': 0,
                 'volatility_multiplier': 1
             },
             'market_crash': {
-                'description': 'Severe market crash scenario',
+
                 'mean_shift': -0.03,
                 'volatility_multiplier': 2.5
             },
             'volatility_spike': {
-                'description': 'Volatility spike without directional shift',
+
                 'mean_shift': 0,
                 'volatility_multiplier': 3.0
             },
             'correlation_breakdown': {
-                'description': 'Breakdown in asset correlations during crisis',
+
                 'mean_shift': -0.01,
                 'volatility_multiplier': 2.0,
                 'correlation_break': 0.5
             },
             'stagflation': {
-                'description': 'Stagflation scenario: higher inflation, lower growth',
+
                 'mean_shift': -0.005,
                 'volatility_multiplier': 1.5,
                 'asset_shocks': {
@@ -334,7 +334,7 @@ class MonteCarloSimulator:
                 }
             },
             'liquidity_crisis': {
-                'description': 'Liquidity crisis with correlation breakdown',
+
                 'mean_shift': -0.02,
                 'volatility_multiplier': 2.0,
                 'correlation_break': 0.7,

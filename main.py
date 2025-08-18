@@ -58,13 +58,13 @@ def run_api():
 def run_system_test():
     logger.info("Running system test...")
     
-    # Add the current directory to the Python path to ensure imports work
+
     base_path = os.path.dirname(os.path.abspath(__file__))
     if base_path not in sys.path:
         sys.path.insert(0, base_path)
     
-    # Import and execute the individual test functions directly rather than
-    # importing the run_system_test function which has scope issues
+
+
     try:
         from tests.system_test import (
             generate_sample_market_data,
@@ -79,7 +79,7 @@ def run_system_test():
         
         print("\n===== Running AI-Driven Trade Risk Assessment System Test =====")
         
-        # Follow the same steps as the original run_system_test function
+
         market_df = generate_sample_market_data()
         trade_df = generate_sample_trade_data(market_df)
         sentiment_df = generate_sample_sentiment_data(market_df)
