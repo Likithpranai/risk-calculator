@@ -254,10 +254,11 @@ def get_sample_data():
         low = close * (1 - 0.005 - 0.01 * np.random.rand(len(dates)))
         volume = np.random.randint(1000000, 10000000, len(dates))
         
+        open_prices = [close[0] if i == 0 else close[i-1] for i in range(len(dates))]
         symbol_data = pd.DataFrame({
             'Date': dates,
             'Symbol': symbol,
-            'Open': close[0] if i == 0 else close[i-1] for i in range(len(dates)),
+            'Open': open_prices,
             'High': high,
             'Low': low,
             'Close': close,
@@ -478,17 +479,17 @@ def update_stress_test_tab(scenario, time_horizon):
     cov_matrix = np.zeros((len(symbols), len(symbols)))
     for i in range(len(symbols)):
         for j in range(len(symbols)):
-            # Fill with reasonable correlation values
+
             if i == j:
                 cov_matrix[i, j] = np.std(returns_data[i]) ** 2
             else:
-                # Assume 0.3 correlation between different assets
+
                 cov_matrix[i, j] = 0.3 * np.std(returns_data[i]) * np.std(returns_data[j])
     
     simulator = MonteCarloSimulator(iterations=1000)
     scenarios = simulator.define_standard_scenarios()
     
-    # Run stress test for selected scenario and base case for comparison
+
     test_scenarios = {'base_case': scenarios['base_case']}
     if scenario != 'base_case':
         test_scenarios[scenario] = scenarios[scenario]
@@ -503,7 +504,7 @@ def update_stress_test_tab(scenario, time_horizon):
     
     mc_fig = go.Figure()
     
-    # Plot mean path and confidence interval
+
     x_days = np.arange(0, time_horizon + 1)
     
     for sc_name in stress_results.keys():
@@ -516,7 +517,7 @@ def update_stress_test_tab(scenario, time_horizon):
             line_color = 'red'
             fill_color = 'rgba(255, 0, 0, 0.1)'
         
-        # Mean path
+
         mc_fig.add_trace(go.Scatter(
             x=x_days,
             y=sc_results['mean_path'],
@@ -525,7 +526,7 @@ def update_stress_test_tab(scenario, time_horizon):
             line=dict(color=line_color)
         ))
         
-        # Confidence interval
+
         mc_fig.add_trace(go.Scatter(
             x=np.concatenate([x_days, x_days[::-1]]),
             y=np.concatenate([sc_results['upper_bound'], sc_results['lower_bound'][::-1]]),
@@ -541,7 +542,7 @@ def update_stress_test_tab(scenario, time_horizon):
         yaxis_title='Portfolio Value ($)'
     )
     
-    # Stats table for selected scenario
+
     sc_summary = stress_results[scenario]['summary']
     
     stats_table = html.Table([
@@ -563,7 +564,7 @@ def update_stress_test_tab(scenario, time_horizon):
         ])
     ], style={'width': '100%', 'border-collapse': 'collapse'})
     
-    # VaR comparison across scenarios
+
     var_fig = go.Figure()
     
     all_scenarios = list(scenarios.keys())
@@ -573,7 +574,7 @@ def update_stress_test_tab(scenario, time_horizon):
         if sc_name in stress_results:
             scenario_vars.append(abs(stress_results[sc_name]['summary']['var_95']))
         else:
-            scenario_vars.append(0)  # Placeholder
+            scenario_vars.append(0)
     
     var_fig.add_trace(go.Bar(
         x=[sc.replace('_', ' ').title() for sc in all_scenarios],

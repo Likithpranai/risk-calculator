@@ -1,7 +1,4 @@
-"""
-Sentiment analyzer module for processing news and social media data.
-Uses NLP techniques to extract market sentiment for risk prediction.
-"""
+
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Union, Any
@@ -14,32 +11,22 @@ import sys
 import json
 from concurrent.futures import ThreadPoolExecutor
 
-# Import configuration
+
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 from config.config import SENTIMENT_BATCH_SIZE, USE_PARALLEL, MAX_THREADS
 
-# Set up logger
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class SentimentAnalyzer:
-    """
-    Analyzes market sentiment from news and social media feeds.
-    Provides sentiment scores that can be integrated into risk models.
-    """
+
     
     def __init__(self, 
                 model_type: str = 'transformer',
                 use_gpu: bool = False,
                 batch_size: int = SENTIMENT_BATCH_SIZE):
-        """
-        Initialize the SentimentAnalyzer.
-        
-        Args:
-            model_type: Type of model to use ('transformer', 'vader', 'textblob')
-            use_gpu: Whether to use GPU acceleration if available
-            batch_size: Batch size for processing
-        """
+
         self.model_type = model_type
         self.use_gpu = use_gpu
         self.batch_size = batch_size
@@ -48,22 +35,21 @@ class SentimentAnalyzer:
         self._load_model()
         
     def _load_model(self):
-        """Load the sentiment analysis model based on model_type."""
         start_time = time.time()
         
         try:
             if self.model_type == 'transformer':
-                # Use Hugging Face transformers for sentiment analysis
+
                 try:
                     from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
                     
-                    # Use FinBERT for financial sentiment analysis if available
+
                     model_name = "ProsusAI/finbert"
                     
-                    # Only load tokenizer initially (lazy loading)
+
                     self.tokenizer = AutoTokenizer.from_pretrained(model_name)
                     
-                    # Defer model loading until first use to save memory
+
                     logger.info(f"Initialized transformer tokenizer ({model_name})")
                     
                 except ImportError:
@@ -71,12 +57,12 @@ class SentimentAnalyzer:
                     self.model_type = 'vader'
                     
             if self.model_type == 'vader':
-                # Use VADER (Valence Aware Dictionary and sEntiment Reasoner)
+
                 try:
                     from nltk.sentiment.vader import SentimentIntensityAnalyzer
                     import nltk
                     
-                    # Download VADER lexicon if not already downloaded
+
                     try:
                         nltk.data.find('sentiment/vader_lexicon.zip')
                     except LookupError:
@@ -90,10 +76,10 @@ class SentimentAnalyzer:
                     self.model_type = 'textblob'
                     
             if self.model_type == 'textblob':
-                # Use TextBlob (simple but effective)
+
                 try:
                     from textblob import TextBlob
-                    # TextBlob is initialized on demand
+
                     logger.info("Will use TextBlob for sentiment analysis")
                 except ImportError:
                     logger.error("No sentiment analysis libraries available")
@@ -102,11 +88,10 @@ class SentimentAnalyzer:
             
         except Exception as e:
             logger.error(f"Error initializing sentiment model: {e}")
-            # Fall back to a simple dictionary-based approach if all else fails
+
             self.model_type = 'dictionary'
             
     def _ensure_model_loaded(self):
-        """Ensure the model is loaded (for lazy loading)."""
         if self.model_type == 'transformer' and self.model is None and self.tokenizer is not None:
             try:
                 from transformers import AutoModelForSequenceClassification, pipeline
@@ -117,12 +102,12 @@ class SentimentAnalyzer:
                 model_name = "ProsusAI/finbert"
                 model = AutoModelForSequenceClassification.from_pretrained(model_name)
                 
-                # Set up device
-                device = -1  # CPU
+
+                device = -1
                 if self.use_gpu:
                     import torch
                     if torch.cuda.is_available():
-                        device = 0  # First GPU
+                        device = 0
                         
                 self.model = pipeline(
                     "sentiment-analysis", 
@@ -139,19 +124,10 @@ class SentimentAnalyzer:
                 self._load_model()
                 
     def analyze_text(self, text: str) -> Dict[str, float]:
-        """
-        Analyze sentiment of a single text.
-        
-        Args:
-            text: Input text to analyze
-            
-        Returns:
-            Dictionary with sentiment scores
-        """
         # Ensure model is loaded
         self._ensure_model_loaded()
         
-        # Clean the text
+
         clean_text = self._preprocess_text(text)
         
         if not clean_text:
@@ -159,8 +135,8 @@ class SentimentAnalyzer:
             
         try:
             if self.model_type == 'transformer':
-                # Use Hugging Face transformer
-                result = self.model(clean_text[:512])[0]  # Limit text length
+
+                result = self.model(clean_text[:512])[0]
                 label = result['label'].lower()
                 score = result['score']
                 
@@ -168,7 +144,7 @@ class SentimentAnalyzer:
                 sentiment = {'positive': 0.0, 'negative': 0.0, 'neutral': 0.0}
                 sentiment[label] = score
                 
-                # Calculate compound score (-1 to 1)
+
                 if label == 'positive':
                     compound = score
                 elif label == 'negative':
@@ -179,7 +155,7 @@ class SentimentAnalyzer:
                 sentiment['compound'] = compound
                 
             elif self.model_type == 'vader':
-                # Use VADER
+
                 scores = self.model.polarity_scores(clean_text)
                 sentiment = {
                     'positive': scores['pos'],
@@ -189,7 +165,7 @@ class SentimentAnalyzer:
                 }
                 
             elif self.model_type == 'textblob':
-                # Use TextBlob
+
                 from textblob import TextBlob
                 blob = TextBlob(clean_text)
                 polarity = blob.sentiment.polarity
@@ -213,15 +189,14 @@ class SentimentAnalyzer:
                 }
                 
             else:
-                # Dictionary-based approach
-                # Simple keyword-based approach as fallback
+
                 pos_words = ['up', 'rise', 'gain', 'positive', 'bull', 'bullish', 'growth', 'profit']
                 neg_words = ['down', 'fall', 'drop', 'negative', 'bear', 'bearish', 'loss', 'decline']
                 
                 tokens = clean_text.lower().split()
                 pos_count = sum(word in tokens for word in pos_words)
                 neg_count = sum(word in tokens for word in neg_words)
-                total = max(pos_count + neg_count, 1)  # Avoid division by zero
+                total = max(pos_count + neg_count, 1)
                 
                 sentiment = {
                     'positive': pos_count / total if total > 0 else 0.0,
@@ -237,15 +212,6 @@ class SentimentAnalyzer:
             return {'positive': 0.0, 'negative': 0.0, 'neutral': 1.0, 'compound': 0.0}
             
     def analyze_texts(self, texts: List[str]) -> List[Dict[str, float]]:
-        """
-        Analyze sentiment of multiple texts in an efficient way.
-        
-        Args:
-            texts: List of texts to analyze
-            
-        Returns:
-            List of dictionaries with sentiment scores
-        """
         start_time = time.time()
         
         if not texts:
@@ -306,30 +272,18 @@ class SentimentAnalyzer:
                         content_col: str = 'content',
                         date_col: str = 'date',
                         symbol_col: Optional[str] = 'symbol') -> pd.DataFrame:
-        """
-        Analyze sentiment from a news feed dataframe.
-        
-        Args:
-            news_df: DataFrame with news articles
-            content_col: Column name with article content
-            date_col: Column name with article date
-            symbol_col: Optional column name with ticker symbol
-            
-        Returns:
-            DataFrame with sentiment scores
-        """
         if content_col not in news_df.columns:
             logger.error(f"Content column {content_col} not found in news dataframe")
             return pd.DataFrame()
             
-        # Analyze sentiment for each news item
+
         contents = news_df[content_col].tolist()
         sentiments = self.analyze_texts(contents)
         
-        # Create results dataframe
+
         results = pd.DataFrame(sentiments)
         
-        # Add date and symbol if available
+
         if date_col in news_df.columns:
             results[date_col] = news_df[date_col]
         if symbol_col in news_df.columns:
@@ -341,18 +295,6 @@ class SentimentAnalyzer:
                            content_col: str = 'text',
                            date_col: str = 'created_at',
                            symbol_col: Optional[str] = None) -> pd.DataFrame:
-        """
-        Analyze sentiment from social media posts.
-        
-        Args:
-            posts_df: DataFrame with social media posts
-            content_col: Column name with post content
-            date_col: Column name with post date
-            symbol_col: Optional column name with ticker symbol
-            
-        Returns:
-            DataFrame with sentiment scores
-        """
         return self.analyze_news_feed(
             posts_df, 
             content_col=content_col, 
@@ -364,18 +306,6 @@ class SentimentAnalyzer:
                           date_col: str = 'date',
                           symbol_col: Optional[str] = 'symbol',
                           window_days: int = 1) -> pd.DataFrame:
-        """
-        Aggregate sentiment scores over a time window.
-        
-        Args:
-            sentiment_df: DataFrame with sentiment scores
-            date_col: Column name with date
-            symbol_col: Optional column name with ticker symbol
-            window_days: Window size in days
-            
-        Returns:
-            DataFrame with aggregated sentiment scores
-        """
         if date_col not in sentiment_df.columns:
             logger.error(f"Date column {date_col} not found in sentiment dataframe")
             return pd.DataFrame()
@@ -418,24 +348,11 @@ class SentimentAnalyzer:
                              symbol_col: str = 'Symbol',
                              date_col: str = 'Date',
                              return_col: str = 'DailyReturn') -> pd.DataFrame:
-        """
-        Calculate the impact of sentiment on market returns.
-        
-        Args:
-            sentiment_df: DataFrame with sentiment scores
-            market_df: DataFrame with market returns
-            symbol_col: Column name with ticker symbol
-            date_col: Column name with date
-            return_col: Column name with return values
-            
-        Returns:
-            DataFrame with sentiment impact scores
-        """
-        # Ensure date columns are datetime
+
         sentiment_df[date_col] = pd.to_datetime(sentiment_df[date_col])
         market_df[date_col] = pd.to_datetime(market_df[date_col])
         
-        # Merge sentiment and market data
+
         if symbol_col in sentiment_df.columns:
             merged = pd.merge(
                 sentiment_df,
@@ -444,7 +361,7 @@ class SentimentAnalyzer:
                 how='inner'
             )
         else:
-            # If no symbol column in sentiment, assume it applies to all symbols
+
             merged = pd.merge(
                 sentiment_df,
                 market_df[[date_col, return_col]],
@@ -456,17 +373,17 @@ class SentimentAnalyzer:
             logger.warning("No matching data after merging sentiment and market data")
             return pd.DataFrame()
             
-        # Calculate correlation between sentiment and returns
+
         corr = merged.corr()[['compound', 'positive', 'negative']][return_col].to_dict()
         
-        # Calculate impact scores
+
         impact_scores = {
             'compound_impact': corr.get('compound', 0) * merged['compound'].std() / merged[return_col].std(),
             'positive_impact': corr.get('positive', 0) * merged['positive'].std() / merged[return_col].std(),
             'negative_impact': corr.get('negative', 0) * merged['negative'].std() / merged[return_col].std()
         }
         
-        # Add impact score to original sentiment data
+
         result = sentiment_df.copy()
         for score_name, score_value in impact_scores.items():
             result[score_name] = score_value
@@ -474,31 +391,22 @@ class SentimentAnalyzer:
         return result
         
     def _preprocess_text(self, text: str) -> str:
-        """
-        Preprocess text for sentiment analysis.
-        
-        Args:
-            text: Input text
-            
-        Returns:
-            Preprocessed text
-        """
         if not text or not isinstance(text, str):
             return ""
             
-        # Convert to lowercase
+
         text = text.lower()
         
-        # Replace URLs with a placeholder
+
         text = re.sub(r'https?://\S+|www\.\S+', '[URL]', text)
         
-        # Replace user mentions (for social media) with a placeholder
+
         text = re.sub(r'@\w+', '[USER]', text)
         
-        # Replace stock tickers with a placeholder
+
         text = re.sub(r'\$[A-Za-z]+', '[TICKER]', text)
         
-        # Replace multiple spaces with single space
+
         text = re.sub(r'\s+', ' ', text)
         
         return text.strip()

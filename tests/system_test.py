@@ -103,7 +103,7 @@ def generate_sample_sentiment_data(market_df, output_dir=None):
     sentiment_analyzer = SentimentAnalyzer()
     
     symbols = market_df['Symbol'].unique()
-    dates = sorted(market_df['Date'].unique())[-30:]  # Last 30 days
+    dates = sorted(market_df['Date'].unique())[-30:]
     
     sentiment_data = []
     
@@ -124,15 +124,15 @@ def generate_sample_sentiment_data(market_df, output_dir=None):
         symbol_returns = market_df[market_df['Symbol'] == symbol]['DailyReturn'].dropna().values
         
         for date in dates:
-            # Generate 2-5 news articles per day
+
             num_articles = np.random.randint(2, 6)
             
             for _ in range(num_articles):
-                # Select a random news template
+
                 news_text = np.random.choice(news_templates).format(symbol=symbol)
                 
-                # Analyze sentiment
-                sentiment = sentiment_analyzer.analyze(news_text)
+
+                sentiment = sentiment_analyzer.analyze_text(news_text)
                 
                 sentiment_data.append({
                     'symbol': symbol,
@@ -203,7 +203,7 @@ def test_monte_carlo_simulation(market_df, trade_risk):
     
     scenarios = simulator.define_standard_scenarios()
     
-    # Test two scenarios: base_case and market_crash
+
     test_scenarios = {
         'base_case': scenarios['base_case'],
         'market_crash': scenarios['market_crash']
@@ -231,10 +231,10 @@ def test_ml_prediction(market_df, sentiment_df, trade_risk):
     
     risk_predictor = RiskPredictor(use_sentiment=True)
     
-    # Create a training dataset with historical volatility as target
+
     features = risk_predictor.prepare_features(market_df, sentiment_df, lookback_periods=10)
     
-    # Add a target column (historical 10-day volatility)
+
     for symbol in market_df['Symbol'].unique():
         symbol_data = market_df[market_df['Symbol'] == symbol]
         
@@ -259,7 +259,7 @@ def test_ml_prediction(market_df, sentiment_df, trade_risk):
     for i, (feature, importance) in enumerate(list(training_results['feature_importance'].items())[:5]):
         print(f"{feature}: {importance:.4f}")
     
-    # Make predictions
+
     position_values = {}
     for _, row in trade_risk.iterrows():
         position_values[row['Symbol']] = row['Value']
@@ -286,7 +286,7 @@ def test_sentiment_analysis(sentiment_df):
     
     sentiment_analyzer = SentimentAnalyzer()
     
-    # Calculate average sentiment per symbol
+
     avg_sentiment = sentiment_df.groupby('symbol')['compound'].mean()
     
     print("\nAverage Sentiment by Symbol:")
@@ -294,7 +294,7 @@ def test_sentiment_analysis(sentiment_df):
         sentiment_label = "Positive" if compound > 0.1 else "Negative" if compound < -0.1 else "Neutral"
         print(f"{symbol}: {compound:.4f} ({sentiment_label})")
     
-    # Test analyzing a new text
+
     test_text = "The company reported strong earnings, beating analyst expectations by 15%. Revenue growth accelerated to 22% year-over-year."
     sentiment = sentiment_analyzer.analyze(test_text)
     
@@ -327,11 +327,11 @@ def test_report_generation(trade_risk, portfolio_metrics, market_df, stress_resu
 def run_system_test():
     print("\n===== Running AI-Driven Trade Risk Assessment System Test =====\n")
     
-    # Create data directory if it doesn't exist
+
     data_dir = os.path.join(os.path.dirname(__file__), '../data/sample')
     os.makedirs(data_dir, exist_ok=True)
     
-    # Generate or load sample data
+
     market_data_file = os.path.join(data_dir, 'sample_market_data.csv')
     if os.path.exists(market_data_file):
         print("Loading existing market data...")
@@ -356,7 +356,7 @@ def run_system_test():
     else:
         sentiment_df = generate_sample_sentiment_data(market_df, data_dir)
     
-    # Run the tests
+
     trade_risk, portfolio_metrics = test_risk_calculation(market_df, trade_df)
     stress_results = test_monte_carlo_simulation(market_df, trade_risk)
     ml_predictions = test_ml_prediction(market_df, sentiment_df, trade_risk)

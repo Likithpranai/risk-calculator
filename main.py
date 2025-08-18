@@ -57,11 +57,57 @@ def run_api():
 
 def run_system_test():
     logger.info("Running system test...")
+    
+    # Add the current directory to the Python path to ensure imports work
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    if base_path not in sys.path:
+        sys.path.insert(0, base_path)
+    
+    # Import and execute the individual test functions directly rather than
+    # importing the run_system_test function which has scope issues
     try:
-        from tests.system_test import run_system_test
-        run_system_test()
-    except ImportError:
-        logger.error("Failed to import system test. Make sure the tests directory is in the Python path.")
+        from tests.system_test import (
+            generate_sample_market_data,
+            generate_sample_trade_data,
+            generate_sample_sentiment_data,
+            test_risk_calculation,
+            test_monte_carlo_simulation,
+            test_ml_prediction,
+            test_sentiment_analysis,
+            test_report_generation
+        )
+        
+        print("\n===== Running AI-Driven Trade Risk Assessment System Test =====")
+        
+        # Follow the same steps as the original run_system_test function
+        market_df = generate_sample_market_data()
+        trade_df = generate_sample_trade_data(market_df)
+        sentiment_df = generate_sample_sentiment_data(market_df)
+        
+        trade_risk, portfolio_metrics = test_risk_calculation(market_df, trade_df)
+        stress_results = test_monte_carlo_simulation(market_df, trade_risk)
+        ml_predictions = test_ml_prediction(market_df, sentiment_df, trade_risk)
+        test_sentiment_analysis(sentiment_df)
+        
+        report_path = test_report_generation(
+            trade_risk, 
+            portfolio_metrics, 
+            market_df, 
+            stress_results,
+            sentiment_df, 
+            ml_predictions
+        )
+        
+        print("\n===== System Test Completed Successfully =====")
+        print(f"Report generated at: {report_path}")
+        
+    except ImportError as e:
+        logger.error(f"Failed to import system test modules: {e}")
+        sys.exit(1)
+    except Exception as e:
+        logger.error(f"System test failed: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 def run_sentiment_feed(symbols=None):
@@ -105,7 +151,7 @@ def generate_report(symbols=None, start_date=None, end_date=None, output_format=
     sentiment_feed = RealTimeSentimentFeed()
     report_generator = ReportGenerator()
     
-    # Load market data
+
     market_data = data_loader.load_market_data(
         symbols=symbols,
         start_date=start_date,
@@ -117,7 +163,7 @@ def generate_report(symbols=None, start_date=None, end_date=None, output_format=
         from tests.system_test import generate_sample_market_data
         market_data = generate_sample_market_data()
     
-    # Generate trade data based on latest prices
+
     latest_date = market_data['Date'].max()
     
     trade_data = []
@@ -130,18 +176,18 @@ def generate_report(symbols=None, start_date=None, end_date=None, output_format=
         
         trade_data.append({
             'Symbol': symbol,
-            'Quantity': 100,  # Default quantity
+            'Quantity': 100,
             'Price': latest_price,
             'TradeDate': latest_date
         })
     
     trade_df = pd.DataFrame(trade_data)
     
-    # Calculate risk metrics
+
     trade_risk = risk_calculator.calculate_trade_risk_metrics(trade_df, market_data)
     portfolio_metrics = risk_calculator.calculate_portfolio_metrics(trade_risk, market_data)
     
-    # Run stress tests
+
     position_values = {}
     for _, row in trade_risk.iterrows():
         position_values[row['Symbol']] = row['Value']
@@ -174,7 +220,7 @@ def generate_report(symbols=None, start_date=None, end_date=None, output_format=
         time_periods=20
     )
     
-    # Get sentiment data
+
     sentiment_data = pd.concat([
         sentiment_feed.aggregate_sentiment_data(symbol, days=30)
         for symbol in symbols_list
@@ -183,7 +229,7 @@ def generate_report(symbols=None, start_date=None, end_date=None, output_format=
     if sentiment_data.empty:
         logger.warning("No sentiment data available. Report will not include sentiment analysis.")
     
-    # Get ML predictions
+
     ml_predictions = risk_predictor.predict_var_es(
         market_data=market_data,
         position_values=position_values,
@@ -192,7 +238,7 @@ def generate_report(symbols=None, start_date=None, end_date=None, output_format=
         sentiment_data=sentiment_data
     )
     
-    # Generate report
+
     output_path = report_generator.generate_risk_report(
         trade_risk_df=trade_risk,
         portfolio_metrics=portfolio_metrics,
@@ -209,23 +255,23 @@ def generate_report(symbols=None, start_date=None, end_date=None, output_format=
 def main():
     parser = argparse.ArgumentParser(description="AI-Driven Trade Risk Assessment System")
     
-    # Create subparsers for different commands
+
     subparsers = parser.add_subparsers(dest='command', help='Command to run')
     
-    # Dashboard command
+
     dashboard_parser = subparsers.add_parser('dashboard', help='Run the risk dashboard web application')
     
-    # API command
+
     api_parser = subparsers.add_parser('api', help='Run the REST API server')
     
-    # Test command
+
     test_parser = subparsers.add_parser('test', help='Run the system test')
     
-    # Sentiment feed command
+
     sentiment_parser = subparsers.add_parser('sentiment', help='Run the real-time sentiment feed')
     sentiment_parser.add_argument('--symbols', nargs='+', help='List of stock symbols to monitor')
     
-    # Report command
+
     report_parser = subparsers.add_parser('report', help='Generate a risk assessment report')
     report_parser.add_argument('--symbols', nargs='+', help='List of stock symbols to include in the report')
     report_parser.add_argument('--start-date', help='Start date for historical data (YYYY-MM-DD)')
@@ -234,10 +280,10 @@ def main():
     
     args = parser.parse_args()
     
-    # Create necessary directories
+
     ensure_directories_exist()
     
-    # Execute the requested command
+
     if args.command == 'dashboard':
         run_dashboard()
     elif args.command == 'api':
@@ -254,7 +300,7 @@ def main():
             output_format=args.format
         )
     else:
-        # Default behavior if no command is provided
+
         parser.print_help()
 
 if __name__ == "__main__":

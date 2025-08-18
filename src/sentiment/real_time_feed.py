@@ -125,7 +125,7 @@ class RealTimeSentimentFeed:
             logger.error(f"Error fetching data for {symbol}: {str(e)}")
     
     @sleep_and_retry
-    @limits(calls=60, period=60)  # Finnhub rate limit: 60 calls per minute
+    @limits(calls=60, period=60)
     def _fetch_finnhub_news(self, symbol: str):
         if not self.finnhub_api_key:
             logger.warning("Finnhub API key not set, skipping finnhub news")
@@ -151,7 +151,7 @@ class RealTimeSentimentFeed:
             if isinstance(news_data, list) and len(news_data) > 0:
                 articles = []
                 
-                for article in news_data[:20]:  # Process up to 20 most recent news
+                for article in news_data[:20]:
                     articles.append({
                         'title': article.get('headline', ''),
                         'summary': article.get('summary', ''),
@@ -174,7 +174,6 @@ class RealTimeSentimentFeed:
                     'articles': articles
                 }
                 
-                # Add to processing queue
                 self.feed_queue.put(('finnhub', data))
                 
                 logger.info(f"Fetched {len(articles)} news articles from Finnhub for {symbol}")
@@ -187,7 +186,7 @@ class RealTimeSentimentFeed:
             logger.error(f"Error processing Finnhub news for {symbol}: {str(e)}")
     
     @sleep_and_retry
-    @limits(calls=100, period=86400)  # NewsAPI rate limit: 100 calls per day for free tier
+    @limits(calls=100, period=86400)
     def _fetch_news_api(self, symbol: str):
         if not self.news_api_key:
             logger.warning("News API key not set, skipping news API")

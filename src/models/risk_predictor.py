@@ -79,6 +79,11 @@ class RiskPredictor:
             feature_df['Vol_10'] = df['DailyReturn'].rolling(window=10).std()
             feature_df['Vol_20'] = df['DailyReturn'].rolling(window=20).std()
             
+            feature_df['MACD'] = df['Close'].ewm(span=12).mean() - df['Close'].ewm(span=26).mean()
+            feature_df['RSI'] = self._calculate_rsi(df['Close'])
+            
+            feature_df['TargetVolatility'] = df['DailyReturn'].rolling(window=20).std().shift(-20)
+        
         if all(x in df.columns for x in ['High', 'Low', 'Close']):
             feature_df['HL_Ratio'] = (df['High'] - df['Low']) / df['Close']
             feature_df['HL_Ratio_MA5'] = feature_df['HL_Ratio'].rolling(window=5).mean()

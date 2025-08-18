@@ -6,8 +6,13 @@ import numpy as np
 from datetime import datetime
 from typing import Dict, List, Optional, Union
 import jinja2
-import weasyprint
 from pathlib import Path
+
+try:
+    import weasyprint
+    WEASYPRINT_AVAILABLE = True
+except (ImportError, OSError):
+    WEASYPRINT_AVAILABLE = False
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 from src.risk_engine.risk_calculator import RiskCalculator
@@ -197,11 +202,15 @@ class ReportGenerator:
         html_path = output_path.replace('.pdf', '.html')
         self._generate_html_report(report_data, html_path)
         
-        html = weasyprint.HTML(filename=html_path)
-        html.write_pdf(output_path)
-        
-        if os.path.exists(html_path):
-            os.remove(html_path)
+        if WEASYPRINT_AVAILABLE:
+            html = weasyprint.HTML(filename=html_path)
+            html.write_pdf(output_path)
+            
+            if os.path.exists(html_path):
+                os.remove(html_path)
+        else:
+            print(f"WeasyPrint not available. PDF generation skipped. HTML report saved at: {html_path}")
+            return html_path
     
     def _generate_json_report(self, report_data: Dict, output_path: str) -> None:
         with open(output_path, 'w') as f:
