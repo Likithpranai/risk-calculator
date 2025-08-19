@@ -11,15 +11,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 class MarketDataProvider:
-    """Provides market data from various sources (Yahoo Finance, Alpha Vantage)"""
+    """Provides market data from various sources (Yahoo Finance, Alpha Vantage, Polygon)"""
     
-    def __init__(self, alpha_vantage_api_key: Optional[str] = None):
+    def __init__(self, alpha_vantage_api_key: Optional[str] = None, polygon_api_key: Optional[str] = None):
         """Initialize the market data provider
         
         Args:
             alpha_vantage_api_key: API key for Alpha Vantage (optional)
         """
         self.alpha_vantage_api_key = alpha_vantage_api_key or os.environ.get('ALPHA_VANTAGE_API_KEY')
+        self.polygon_api_key = polygon_api_key or os.environ.get('POLYGON_API_KEY')
         
     def get_historical_prices(self, 
                              symbols: List[str], 
@@ -44,6 +45,8 @@ class MarketDataProvider:
             return self._get_yahoo_historical_prices(symbols, start_date, end_date, period)
         elif provider == 'alphavantage':
             return self._get_alphavantage_historical_prices(symbols, start_date, end_date)
+        elif provider == 'polygon':
+            return self._get_polygon_historical_prices(symbols, start_date, end_date)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     
@@ -136,8 +139,63 @@ class MarketDataProvider:
         except Exception as e:
             logger.error(f"Error fetching data from Alpha Vantage: {e}")
             return pd.DataFrame()
+            
+    def _get_polygon_historical_prices(self,
+                                      symbols: List[str],
+                                      start_date: Optional[str] = None,
+                                      end_date: Optional[str] = None) -> pd.DataFrame:
+        """Get historical price data from Polygon.io"""
+        if not self.polygon_api_key:
+            logger.error("Polygon API key is not set")
+            return pd.DataFrame()
+            
+        try:
+            all_data = []
+            
+            # Set default dates if not provided
+            if not end_date:
+                end_date = datetime.now().strftime('%Y-%m-%d')
+            if not start_date:
+                start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+                
+            # Format dates for Polygon API (YYYY-MM-DD)
+            start_date_formatted = start_date
+            end_date_formatted = end_date
+            
+            for symbol in symbols:
+                url = f'https://api.polygon.io/v2/aggs/ticker/{symbol}/range/1/day/{start_date_formatted}/{end_date_formatted}?apiKey={self.polygon_api_key}'
+                response = requests.get(url)
+                data = response.json()
+                
+                if 'results' not in data:
+                    logger.error(f"Polygon API error for {symbol}: {data.get('error', 'Unknown error')}")
+                    continue
+                    
+                symbol_data = []
+                for result in data['results']:
+                    # Convert timestamp to date
+                    date = datetime.fromtimestamp(result['t'] / 1000).strftime('%Y-%m-%d')
+                    
+                    symbol_data.append({
+                        'Date': date,
+                        'Price': result['c'],  # Closing price
+                        'Symbol': symbol
+                    })
+                
+                all_data.extend(symbol_data)
+            
+            if not all_data:
+                return pd.DataFrame()
+                
+            result = pd.DataFrame(all_data)
+            result['Date'] = pd.to_datetime(result['Date'])
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error fetching data from Polygon: {e}")
+            return pd.DataFrame()
     
-    def get_company_fundamentals(self, symbol: str, provider: str = 'alphavantage') -> Dict:
+    def get_company_fundamentals(self, symbol: str, provider: str = 'yahoo') -> Dict:
         """Get company fundamental data
         
         Args:
@@ -151,6 +209,8 @@ class MarketDataProvider:
             return self._get_yahoo_fundamentals(symbol)
         elif provider == 'alphavantage':
             return self._get_alphavantage_fundamentals(symbol)
+        elif provider == 'polygon':
+            return self._get_polygon_fundamentals(symbol)
         else:
             raise ValueError(f"Unsupported provider: {provider}")
     
@@ -210,4 +270,52 @@ class MarketDataProvider:
             
         except Exception as e:
             logger.error(f"Error fetching fundamentals from Alpha Vantage for {symbol}: {e}")
+            return {}
+            
+    def _get_polygon_fundamentals(self, symbol: str) -> Dict:
+        """Get company fundamentals from Polygon.io"""
+        if not self.polygon_api_key:
+            logger.error("Polygon API key is not set")
+            return {}
+            
+        try:
+            # Get ticker details
+            url = f'https://api.polygon.io/v3/reference/tickers/{symbol}?apiKey={self.polygon_api_key}'
+            response = requests.get(url)
+            data = response.json()
+            
+            if 'results' not in data:
+                logger.error(f"Polygon API error for {symbol}: {data.get('error', 'Unknown error')}")
+                return {}
+                
+            ticker_info = data['results']
+            
+            # Get financials (if available)
+            financials = {}
+            try:
+                fin_url = f'https://api.polygon.io/v2/reference/financials/{symbol}?apiKey={self.polygon_api_key}'
+                fin_response = requests.get(fin_url)
+                fin_data = fin_response.json()
+                if 'results' in fin_data and fin_data['results']:
+                    financials = fin_data['results'][0]
+            except Exception as e:
+                logger.warning(f"Could not retrieve financials for {symbol}: {e}")
+            
+            # Extract fundamentals
+            fundamentals = {
+                'name': ticker_info.get('name', 'N/A'),
+                'sector': ticker_info.get('sic_description', 'N/A'),
+                'industry': ticker_info.get('standard_industrial_classification', 'N/A'),
+                'market_cap': ticker_info.get('market_cap', 0),
+                'pe_ratio': None,  # Not directly available from ticker endpoint
+                'dividend_yield': None,  # Need separate dividend API call
+                'beta': None,  # Not directly available
+                '52_week_high': None,  # Need separate endpoint
+                '52_week_low': None   # Need separate endpoint
+            }
+            
+            return fundamentals
+            
+        except Exception as e:
+            logger.error(f"Error fetching fundamentals from Polygon for {symbol}: {e}")
             return {}

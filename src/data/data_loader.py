@@ -11,6 +11,7 @@ import time
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 from config.config import DATA_DIR, CHUNK_SIZE, USE_PARALLEL, MAX_THREADS
+from src.data_providers.market_data_provider import MarketDataProvider
 
 
 logging.basicConfig(level=logging.INFO)
@@ -19,16 +20,19 @@ logger = logging.getLogger(__name__)
 class DataLoader:
     
     
-    def __init__(self, cache_data: bool = True):
+    def __init__(self, cache_data: bool = True, polygon_api_key: Optional[str] = None):
         self.cache_data = cache_data
         self.data_cache = {}
         self.last_load_time = {}
+        # Use environment variable if API key is not provided
+        self.polygon_api_key = polygon_api_key or os.environ.get('POLYGON_API_KEY', 'HGaV6oKbB4mbuVEzhfhaKJPeEi8blmjn')
+        self.market_data_provider = MarketDataProvider(polygon_api_key=self.polygon_api_key)
         
     def load_market_data(self, 
                         symbols: List[str], 
                         start_date: str, 
                         end_date: str, 
-                        source: str = 'yahoo') -> pd.DataFrame:
+                        source: str = 'polygon') -> pd.DataFrame:
 
         cache_key = f"market_{'-'.join(symbols)}_{start_date}_{end_date}_{source}"
         
@@ -40,11 +44,35 @@ class DataLoader:
         start_time = time.time()
         logger.info(f"Loading market data for {symbols} from {start_date} to {end_date}")
         
+        if source == 'polygon':
+            try:
+                # Use the Polygon data provider
+                market_data = self.market_data_provider.get_historical_prices(
+                    symbols=symbols,
+                    start_date=start_date,
+                    end_date=end_date,
+                    provider='polygon'
+                )
+                
+                if market_data.empty:
+                    logger.warning(f"No data returned from Polygon API for {symbols}. Falling back to alternate source.")
+                    # Try another source as fallback
+                    source = 'yahoo'
+                else:
+                    # Rename columns if needed to match expected format
+                    if 'Price' in market_data.columns and 'Close' not in market_data.columns:
+                        market_data['Close'] = market_data['Price']
+                        
+            except Exception as e:
+                logger.error(f"Error loading market data from Polygon: {e}")
+                logger.info("Falling back to alternate data source")
+                source = 'yahoo'
+        
         if source == 'yahoo':
             try:
                 import yfinance as yf
+                logger.info("Using Yahoo Finance as data source")
                 
-
                 if USE_PARALLEL and len(symbols) > 1:
                     with ThreadPoolExecutor(max_workers=min(len(symbols), MAX_THREADS)) as executor:
                         data_pieces = list(executor.map(
@@ -52,7 +80,6 @@ class DataLoader:
                             symbols
                         ))
                     
-
                     market_data = pd.concat(data_pieces, keys=symbols, names=['Symbol', 'Date'])
                     market_data = market_data.reset_index()
                 else:
@@ -71,7 +98,6 @@ class DataLoader:
                 file_path = os.path.join(DATA_DIR, 'market_data.csv')
                 market_data = pd.read_csv(file_path)
                 
-
                 market_data = market_data[
                     (market_data['Date'] >= start_date) & 
                     (market_data['Date'] <= end_date) &
@@ -81,7 +107,7 @@ class DataLoader:
             except Exception as e:
                 logger.error(f"Error loading market data from CSV: {e}")
                 return pd.DataFrame()
-        else:
+        elif source != 'polygon':
             logger.error(f"Unsupported data source: {source}")
             return pd.DataFrame()
             

@@ -22,17 +22,12 @@ def main():
     
     print(f"Fetching historical price data for {symbols}")
     
-    # Get 1 year of historical data from Yahoo Finance
-    end_date = datetime.now().strftime('%Y-%m-%d')
-    start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+    print("Using Yahoo Finance API with period parameter...")
     
-    print(f"Date range: {start_date} to {end_date}")
-    print("Using Yahoo Finance API...")
-    
+    # Use period parameter which is more reliable
     yahoo_data = data_provider.get_historical_prices(
         symbols=symbols,
-        start_date=start_date,
-        end_date=end_date,
+        period='1y',  # Get 1 year of data
         provider='yahoo'
     )
     
