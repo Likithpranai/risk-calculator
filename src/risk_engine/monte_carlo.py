@@ -128,8 +128,14 @@ class MonteCarloSimulator:
                 
     
             if 'volatility_multiplier' in scenario_params:
-                centered_returns = scenario_returns - means
-                scenario_returns = means + (centered_returns * scenario_params['volatility_multiplier'])
+                # Reshape means for proper broadcasting
+                if len(scenario_returns.shape) == 3:  # (batch_size, assets, time_periods)
+                    means_reshaped = means.reshape(1, -1, 1)
+                else:  # (batch_size, assets)
+                    means_reshaped = means.reshape(1, -1)
+                    
+                centered_returns = scenario_returns - means_reshaped
+                scenario_returns = means_reshaped + (centered_returns * scenario_params['volatility_multiplier'])
                 
             if 'correlation_break' in scenario_params:
                 indep_returns = np.zeros_like(scenario_returns)

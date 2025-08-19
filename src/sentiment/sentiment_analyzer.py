@@ -211,6 +211,10 @@ class SentimentAnalyzer:
             logger.error(f"Error analyzing sentiment: {e}")
             return {'positive': 0.0, 'negative': 0.0, 'neutral': 1.0, 'compound': 0.0}
             
+    def analyze(self, text: str) -> Dict[str, float]:
+        # Wrapper around analyze_text for compatibility
+        return self.analyze_text(text)
+    
     def analyze_texts(self, texts: List[str]) -> List[Dict[str, float]]:
         start_time = time.time()
         
