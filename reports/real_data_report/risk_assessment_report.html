@@ -1,0 +1,251 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Risk Assessment Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+            h1, h2, h3 { color: #2c3e50; }
+            table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+            th { background-color: #f2f2f2; }
+            tr:hover { background-color: #f5f5f5; }
+            .section { margin-bottom: 30px; padding: 20px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+            .risk-high { color: red; }
+            .risk-medium { color: orange; }
+            .risk-low { color: green; }
+            .chart { max-width: 100%; height: auto; margin: 20px 0; }
+        </style>
+    </head>
+    <body>
+        <h1>AI-Driven Trade Risk Assessment Report</h1>
+        <p>Generated on: 2025-08-19 14:47:22</p>
+        
+        <div class="section">
+            <h2>Executive Summary</h2>
+            <p>This report presents a comprehensive risk assessment for a portfolio of less common stocks
+            using real-time market data from Polygon API. The assessment includes Value at Risk (VaR),
+            Expected Shortfall (ES), and probability metrics at both individual stock and portfolio levels.</p>
+            
+            <p>The portfolio has a total value of $130005.74 with a 
+            Value at Risk (95% confidence) of $6403.05, representing 
+            4.93% of the total portfolio value.</p>
+            
+            <p>Portfolio diversification benefit: 0.11</p>
+        </div>
+        
+        <div class="section">
+            <h2>Portfolio Composition</h2>
+            <img class="chart" src="portfolio_composition.png" alt="Portfolio Composition">
+            
+            <h3>Stock Prices</h3>
+            <img class="chart" src="price_history.png" alt="Price History">
+        </div>
+        
+        <div class="section">
+            <h2>Trade-Level Risk Metrics</h2>
+            <table>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Quantity</th>
+                    <th>Price ($)</th>
+                    <th>Value ($)</th>
+                    <th>VaR 95% ($)</th>
+                    <th>ES 95% ($)</th>
+                    <th>Loss Probability (5%)</th>
+                </tr>
+    
+                <tr>
+                    <td>ETSY</td>
+                    <td>277</td>
+                    <td>64.96</td>
+                    <td>17993.92</td>
+                    <td>828.40</td>
+                    <td>1198.55</td>
+                    <td class="risk-low">0.05</td>
+                </tr>
+        
+                <tr>
+                    <td>PLTR</td>
+                    <td>308</td>
+                    <td>174.03</td>
+                    <td>53601.24</td>
+                    <td>3631.79</td>
+                    <td>5350.86</td>
+                    <td class="risk-medium">0.07</td>
+                </tr>
+        
+                <tr>
+                    <td>ROKU</td>
+                    <td>418</td>
+                    <td>92.33</td>
+                    <td>38593.94</td>
+                    <td>2053.98</td>
+                    <td>3437.09</td>
+                    <td class="risk-medium">0.05</td>
+                </tr>
+        
+                <tr>
+                    <td>SNAP</td>
+                    <td>302</td>
+                    <td>7.34</td>
+                    <td>2216.68</td>
+                    <td>122.87</td>
+                    <td>207.92</td>
+                    <td class="risk-medium">0.06</td>
+                </tr>
+        
+                <tr>
+                    <td>ZM</td>
+                    <td>239</td>
+                    <td>73.64</td>
+                    <td>17599.96</td>
+                    <td>530.25</td>
+                    <td>791.41</td>
+                    <td class="risk-low">0.01</td>
+                </tr>
+        
+            </table>
+            
+            <h3>Value at Risk by Stock</h3>
+            <img class="chart" src="var_by_stock.png" alt="VaR by Stock">
+        </div>
+        
+        <div class="section">
+            <h2>Portfolio-Level Risk Metrics</h2>
+            <table>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+    
+                <tr>
+                    <td>TotalValue</td>
+                    <td>130005.74</td>
+                </tr>
+        
+                <tr>
+                    <td>VaR_95</td>
+                    <td>6403.05</td>
+                </tr>
+        
+                <tr>
+                    <td>ES_95</td>
+                    <td>10797.33</td>
+                </tr>
+        
+                <tr>
+                    <td>DiversificationBenefit</td>
+                    <td>0.11</td>
+                </tr>
+        
+                <tr>
+                    <td>Loss_Prob_5pct</td>
+                    <td>0.05</td>
+                </tr>
+        
+                <tr>
+                    <td>Loss_Prob_10pct</td>
+                    <td>0.01</td>
+                </tr>
+        
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Monte Carlo Stress Test Results</h2>
+            <img class="chart" src="stress_test_var.png" alt="Stress Test VaR">
+            
+            <h3>Scenario Analysis</h3>
+            <table>
+                <tr>
+                    <th>Scenario</th>
+                    <th>Mean Return (%)</th>
+                    <th>VaR 95% (%)</th>
+                    <th>ES 95% (%)</th>
+                    <th>Probability of Loss</th>
+                </tr>
+    
+                <tr>
+                    <td>base_case</td>
+                    <td>0.17%</td>
+                    <td class="risk-low">-4.42%</td>
+                    <td>-2.24%</td>
+                    <td>0.47</td>
+                </tr>
+        
+                <tr>
+                    <td>market_crash</td>
+                    <td>-7.54%</td>
+                    <td class="risk-low">-19.00%</td>
+                    <td>-9.50%</td>
+                    <td>0.85</td>
+                </tr>
+        
+                <tr>
+                    <td>volatility_spike</td>
+                    <td>-0.11%</td>
+                    <td class="risk-low">-13.86%</td>
+                    <td>-6.96%</td>
+                    <td>0.50</td>
+                </tr>
+        
+                <tr>
+                    <td>correlation_breakdown</td>
+                    <td>-0.83%</td>
+                    <td class="risk-low">-5.87%</td>
+                    <td>-2.77%</td>
+                    <td>0.61</td>
+                </tr>
+        
+                <tr>
+                    <td>stagflation</td>
+                    <td>-1.27%</td>
+                    <td class="risk-low">-8.14%</td>
+                    <td>-3.93%</td>
+                    <td>0.61</td>
+                </tr>
+        
+                <tr>
+                    <td>liquidity_crisis</td>
+                    <td>-2.59%</td>
+                    <td class="risk-low">-6.29%</td>
+                    <td>-3.17%</td>
+                    <td>0.87</td>
+                </tr>
+        
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Risk Assessment Conclusions</h2>
+            <h3>Key Insights</h3>
+            <ul>
+    
+                <li>The portfolio shows a diversification benefit of 0.11, indicating 
+                good 
+                diversification.</li>
+                
+                <li>High-risk stocks: None</li>
+                
+                <li>The most severe impact would occur under the base_case scenario, with a VaR of 
+                -4.42% and probability of loss of 0.47.</li>
+                
+                <li>Overall portfolio risk: Medium</li>
+            </ul>
+            
+            <h3>Recommendations</h3>
+            <ul>
+    
+            </ul>
+        </div>
+        
+        <div class="section">
+            <h3>Disclaimer</h3>
+            <p>This report is for informational purposes only and does not constitute investment advice. 
+            Past performance is not indicative of future results. All investments involve risk, including the 
+            possible loss of principal.</p>
+        </div>
+    </body>
+    </html>
+    
