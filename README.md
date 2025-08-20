@@ -1,69 +1,25 @@
-# AI-Driven Trade Risk Assessment and Stress Testing System
+# Risk Analysis System
 
-## Overview
-This system calculates and visualizes risks for individual trades and portfolios based on historical trade and market data. It focuses on key risk metrics such as Value-at-Risk (VaR), Expected Shortfall (ES), and trade-specific loss probabilities.
+## Project Description
 
-## Key Features
-- Machine learning models for predicting potential losses under normal and stress scenarios
-- Monte Carlo simulations to model extreme market conditions
-- Real-time market sentiment integration from news and social media
-- Interactive dashboards for risk visualization and stress testing
-- Simple risk assessment report generation (HTML, PDF, JSON formats)
-- Low-latency API endpoints with security controls
+The Risk Analysis System is a comprehensive financial portfolio risk assessment tool that leverages real-time market data to calculate critical risk metrics for investment decision-making. The system fetches live stock price data from multiple sources (Polygon API and Alpha Vantage) and performs advanced risk calculations to evaluate portfolio vulnerability under various market conditions.
 
-## Components
-1. **Data Ingestion**: Historical market data, trade data, and real-time sentiment feeds
-2. **Risk Engine**: Core calculation of risk metrics
-3. **Stress Testing**: Simulation of extreme market scenarios
-4. **Sentiment Analysis**: Processing of news and social media data
-5. **Visualization**: Interactive dashboards for risk monitoring
-6. **API Layer**: Secure endpoints for all system functions
-7. **Report Generation**: Customizable risk reports
+At its core, the system calculates essential risk metrics including Value-at-Risk (VaR) and Expected Shortfall at different confidence levels (95%, 99%), allowing investors to quantify potential losses in normal and extreme market conditions. The system's Monte Carlo simulation engine runs thousands of iterations to model potential future portfolio performance across multiple scenarios.
+
+The stress testing framework evaluates portfolio resilience under predefined crisis scenarios including market crashes, volatility spikes, correlation breakdowns, stagflation, and liquidity crises. This provides a comprehensive view of how investments might perform during periods of market turbulence.
+
+The modular architecture ensures separation of concerns between data acquisition, risk calculation, and reporting components, allowing for easy maintenance and future extensions. The system handles API rate limitations gracefully and provides fallback mechanisms to ensure continuous operation.
 
 ## Tech Stack
-- Python, pandas, NumPy, scikit-learn for data processing and analysis
-- FastAPI for API endpoints with JWT authentication
-- Plotly Dash for interactive visualizations
-- NLTK/spaCy for sentiment analysis
-- Jinja2 and WeasyPrint for report generation
 
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/risk-calculator.git
-cd risk-calculator
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Optional: Download NLTK data
-python -c "import nltk; nltk.download('vader_lexicon')"
-```
-
-## Configuration
-
-Create a `config/config.py` file with the following settings:
-
-```python
-# API security settings
-JWT_SECRET = "your-secret-key"
-JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_SECONDS = 3600
-CORS_ORIGINS = ["http://localhost:3000", "http://localhost:8050"]
-
-# Rate limiting
-RATE_LIMIT_ENABLED = True
-RATE_LIMIT_REQUESTS = 100
-RATE_LIMIT_PERIOD = 60  # seconds
-
-# Sentiment API keys
-FINNHUB_API_KEY = "your-finnhub-api-key"
-NEWSAPI_API_KEY = "your-newsapi-key"
-TWITTER_API_KEY = "your-twitter-api-key"
-TWITTER_API_SECRET = "your-twitter-api-secret"
-TWITTER_ACCESS_TOKEN = "your-twitter-access-token"
-TWITTER_ACCESS_SECRET = "your-twitter-access-secret"
+- **Python**: Core programming language
+- **NumPy & Pandas**: Data manipulation and numerical computations
+- **SciPy**: Statistical analysis and probability distributions
+- **Polygon API & Alpha Vantage API**: Real-time market data providers
+- **Concurrent Processing**: Multi-threading for parallel computations
+- **Matplotlib/Plotly** (Optional): Data visualization capabilities
+- **FastAPI**: API endpoints for risk metrics delivery
+- **WeasyPrint**: PDF report generation
 
 # Paths
 CACHE_DIR = "./cache"
@@ -160,11 +116,3 @@ risk-calculator/
 ├── main.py               # CLI entry point
 └── requirements.txt      # Project dependencies
 ```
-
-## Future Enhancements
-
-- Advanced deep learning models for market prediction
-- Integration with additional data sources
-- Backtesting framework for risk models
-- Expanded stress test scenarios
-- Mobile notifications for risk threshold breaches

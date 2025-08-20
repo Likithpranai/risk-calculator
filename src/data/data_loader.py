@@ -24,7 +24,6 @@ class DataLoader:
         self.cache_data = cache_data
         self.data_cache = {}
         self.last_load_time = {}
-        # Use environment variable if API key is not provided
         self.polygon_api_key = polygon_api_key or os.environ.get('POLYGON_API_KEY', 'HGaV6oKbB4mbuVEzhfhaKJPeEi8blmjn')
         self.market_data_provider = MarketDataProvider(polygon_api_key=self.polygon_api_key)
         
@@ -56,10 +55,8 @@ class DataLoader:
                 
                 if market_data.empty:
                     logger.warning(f"No data returned from Polygon API for {symbols}. Falling back to alternate source.")
-                    # Try another source as fallback
                     source = 'yahoo'
                 else:
-                    # Rename columns if needed to match expected format
                     if 'Price' in market_data.columns and 'Close' not in market_data.columns:
                         market_data['Close'] = market_data['Price']
                         
@@ -184,16 +181,6 @@ class DataLoader:
             return pd.DataFrame()
             
     def _preprocess_market_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Preprocess market data for analysis.
-        
-        Args:
-            data: Raw market data
-            
-        Returns:
-            Preprocessed market data
-        """
-        # Make a copy to avoid modifying the original
         df = data.copy()
         
 
@@ -216,16 +203,6 @@ class DataLoader:
         return df
         
     def _preprocess_trade_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Preprocess trade data for analysis.
-        
-        Args:
-            data: Raw trade data
-            
-        Returns:
-            Preprocessed trade data
-        """
-        # Make a copy to avoid modifying the original
         df = data.copy()
         
 

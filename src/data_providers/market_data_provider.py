@@ -11,14 +11,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class MarketDataProvider:
-    """Provides market data from various sources (Yahoo Finance, Alpha Vantage, Polygon)"""
     
     def __init__(self, alpha_vantage_api_key: Optional[str] = None, polygon_api_key: Optional[str] = None):
-        """Initialize the market data provider
-        
-        Args:
-            alpha_vantage_api_key: API key for Alpha Vantage (optional)
-        """
         self.alpha_vantage_api_key = alpha_vantage_api_key or os.environ.get('ALPHA_VANTAGE_API_KEY')
         self.polygon_api_key = polygon_api_key or os.environ.get('POLYGON_API_KEY')
         
@@ -28,19 +22,6 @@ class MarketDataProvider:
                              end_date: Optional[str] = None,
                              period: str = '1y',
                              provider: str = 'yahoo') -> pd.DataFrame:
-        """Get historical price data for a list of symbols
-        
-        Args:
-            symbols: List of ticker symbols
-            start_date: Start date (YYYY-MM-DD format), defaults to 1 year ago
-            end_date: End date (YYYY-MM-DD format), defaults to today
-            period: Period to fetch (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)
-                   Only used if start_date and end_date are None
-            provider: 'yahoo' or 'alphavantage'
-            
-        Returns:
-            DataFrame with historical price data
-        """
         if provider == 'yahoo':
             return self._get_yahoo_historical_prices(symbols, start_date, end_date, period)
         elif provider == 'alphavantage':
@@ -55,18 +36,15 @@ class MarketDataProvider:
                                     start_date: Optional[str] = None,
                                     end_date: Optional[str] = None,
                                     period: str = '1y') -> pd.DataFrame:
-        """Get historical price data from Yahoo Finance"""
         try:
             if start_date and end_date:
                 data = yf.download(symbols, start=start_date, end=end_date, progress=False)
             else:
                 data = yf.download(symbols, period=period, progress=False)
-            
-            # Handle case where only one symbol is requested
+    
             if len(symbols) == 1:
                 data.columns = pd.MultiIndex.from_product([data.columns, symbols])
                 
-            # Reformat the data to a more convenient format
             prices_dict = {}
             for symbol in symbols:
                 try:
@@ -80,7 +58,6 @@ class MarketDataProvider:
             if not prices_dict:
                 return pd.DataFrame()
                 
-            # Combine all symbols into a single DataFrame
             result = pd.concat(prices_dict.values(), ignore_index=True)
             return result
             
@@ -92,7 +69,6 @@ class MarketDataProvider:
                                            symbols: List[str],
                                            start_date: Optional[str] = None,
                                            end_date: Optional[str] = None) -> pd.DataFrame:
-        """Get historical price data from Alpha Vantage"""
         if not self.alpha_vantage_api_key:
             logger.error("Alpha Vantage API key is not set")
             return pd.DataFrame()
@@ -117,7 +93,6 @@ class MarketDataProvider:
                 
                 symbol_data = []
                 for date, values in time_series.items():
-                    # Filter by date range if provided
                     if (start_date and date < start_date) or (end_date and date > end_date):
                         continue
                         
@@ -144,21 +119,16 @@ class MarketDataProvider:
                                       symbols: List[str],
                                       start_date: Optional[str] = None,
                                       end_date: Optional[str] = None) -> pd.DataFrame:
-        """Get historical price data from Polygon.io"""
         if not self.polygon_api_key:
             logger.error("Polygon API key is not set")
             return pd.DataFrame()
             
         try:
             all_data = []
-            
-            # Set default dates if not provided
             if not end_date:
                 end_date = datetime.now().strftime('%Y-%m-%d')
             if not start_date:
                 start_date = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
-                
-            # Format dates for Polygon API (YYYY-MM-DD)
             start_date_formatted = start_date
             end_date_formatted = end_date
             
@@ -173,12 +143,11 @@ class MarketDataProvider:
                     
                 symbol_data = []
                 for result in data['results']:
-                    # Convert timestamp to date
                     date = datetime.fromtimestamp(result['t'] / 1000).strftime('%Y-%m-%d')
                     
                     symbol_data.append({
                         'Date': date,
-                        'Price': result['c'],  # Closing price
+                        'Price': result['c'],  
                         'Symbol': symbol
                     })
                 
@@ -196,15 +165,6 @@ class MarketDataProvider:
             return pd.DataFrame()
     
     def get_company_fundamentals(self, symbol: str, provider: str = 'yahoo') -> Dict:
-        """Get company fundamental data
-        
-        Args:
-            symbol: Ticker symbol
-            provider: 'yahoo' or 'alphavantage'
-            
-        Returns:
-            Dictionary with company fundamental data
-        """
         if provider == 'yahoo':
             return self._get_yahoo_fundamentals(symbol)
         elif provider == 'alphavantage':
@@ -215,12 +175,9 @@ class MarketDataProvider:
             raise ValueError(f"Unsupported provider: {provider}")
     
     def _get_yahoo_fundamentals(self, symbol: str) -> Dict:
-        """Get company fundamentals from Yahoo Finance"""
         try:
             ticker = yf.Ticker(symbol)
             info = ticker.info
-            
-            # Extract key financial metrics
             fundamentals = {
                 'name': info.get('shortName', 'N/A'),
                 'sector': info.get('sector', 'N/A'),
@@ -240,7 +197,6 @@ class MarketDataProvider:
             return {}
     
     def _get_alphavantage_fundamentals(self, symbol: str) -> Dict:
-        """Get company fundamentals from Alpha Vantage"""
         if not self.alpha_vantage_api_key:
             logger.error("Alpha Vantage API key is not set")
             return {}
@@ -273,13 +229,11 @@ class MarketDataProvider:
             return {}
             
     def _get_polygon_fundamentals(self, symbol: str) -> Dict:
-        """Get company fundamentals from Polygon.io"""
         if not self.polygon_api_key:
             logger.error("Polygon API key is not set")
             return {}
             
         try:
-            # Get ticker details
             url = f'https://api.polygon.io/v3/reference/tickers/{symbol}?apiKey={self.polygon_api_key}'
             response = requests.get(url)
             data = response.json()
@@ -289,8 +243,6 @@ class MarketDataProvider:
                 return {}
                 
             ticker_info = data['results']
-            
-            # Get financials (if available)
             financials = {}
             try:
                 fin_url = f'https://api.polygon.io/v2/reference/financials/{symbol}?apiKey={self.polygon_api_key}'
@@ -301,17 +253,16 @@ class MarketDataProvider:
             except Exception as e:
                 logger.warning(f"Could not retrieve financials for {symbol}: {e}")
             
-            # Extract fundamentals
             fundamentals = {
                 'name': ticker_info.get('name', 'N/A'),
                 'sector': ticker_info.get('sic_description', 'N/A'),
                 'industry': ticker_info.get('standard_industrial_classification', 'N/A'),
                 'market_cap': ticker_info.get('market_cap', 0),
-                'pe_ratio': None,  # Not directly available from ticker endpoint
-                'dividend_yield': None,  # Need separate dividend API call
-                'beta': None,  # Not directly available
-                '52_week_high': None,  # Need separate endpoint
-                '52_week_low': None   # Need separate endpoint
+                'pe_ratio': None, 
+                'dividend_yield': None,  
+                'beta': None, 
+                '52_week_high': None, 
+                '52_week_low': None   
             }
             
             return fundamentals

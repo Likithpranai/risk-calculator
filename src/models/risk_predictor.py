@@ -58,30 +58,15 @@ class RiskPredictor:
         return features
     
     def _calculate_rsi(self, prices: pd.Series, window: int = 14) -> pd.Series:
-        """Calculate the Relative Strength Index (RSI) for a price series.
-        
-        Args:
-            prices: Series of price values
-            window: The RSI window period (default: 14)
-            
-        Returns:
-            Series containing RSI values
-        """
-        # Calculate price changes
         delta = prices.diff()
         
-        # Separate gains and losses
         gain = delta.where(delta > 0, 0)
         loss = -delta.where(delta < 0, 0)
         
-        # Calculate average gain and average loss
         avg_gain = gain.rolling(window=window).mean()
         avg_loss = loss.rolling(window=window).mean()
         
-        # Calculate relative strength
-        rs = avg_gain / avg_loss.replace(0, float('1e-9'))  # Avoid division by zero
-        
-        # Calculate RSI
+        rs = avg_gain / avg_loss.replace(0, float('1e-9'))
         rsi = 100 - (100 / (1 + rs))
         
         return rsi

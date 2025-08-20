@@ -3,31 +3,21 @@ import sys
 import pandas as pd
 from datetime import datetime, timedelta
 
-# Add parent directory to path to import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data_providers.market_data_provider import MarketDataProvider
 
 def main():
-    """Example of using MarketDataProvider to fetch real market data"""
-    
-    # Get Alpha Vantage API key from environment variable or use None for Yahoo only
     alpha_vantage_key = os.environ.get('ALPHA_VANTAGE_API_KEY')
-    
-    # Create market data provider
     data_provider = MarketDataProvider(alpha_vantage_api_key=alpha_vantage_key)
-    
-    # Define symbols to fetch
     symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
     
     print(f"Fetching historical price data for {symbols}")
     
     print("Using Yahoo Finance API with period parameter...")
-    
-    # Use period parameter which is more reliable
     yahoo_data = data_provider.get_historical_prices(
         symbols=symbols,
-        period='1y',  # Get 1 year of data
+        period='1y',  
         provider='yahoo'
     )
     
@@ -35,8 +25,6 @@ def main():
         print(f"Successfully retrieved {len(yahoo_data)} records from Yahoo Finance")
         print("\nSample of the data:")
         print(yahoo_data.head())
-        
-        # Calculate daily returns
         for symbol in symbols:
             symbol_data = yahoo_data[yahoo_data['Symbol'] == symbol].sort_values('Date')
             if len(symbol_data) > 1:
@@ -48,12 +36,8 @@ def main():
                 print(f"Max daily return: {returns.max():.4f}")
     else:
         print("No data retrieved from Yahoo Finance")
-    
-    # If Alpha Vantage key is available, also try fetching from there
     if alpha_vantage_key:
         print("\nUsing Alpha Vantage API...")
-        
-        # Just fetch one symbol as Alpha Vantage has strict rate limits
         alpha_symbol = symbols[0]
         alpha_data = data_provider.get_historical_prices(
             symbols=[alpha_symbol],
@@ -71,7 +55,6 @@ def main():
     else:
         print("\nAlpha Vantage API key not provided. Skipping Alpha Vantage data fetch.")
     
-    # Fetch fundamentals for one symbol
     symbol = symbols[0]
     print(f"\nFetching fundamental data for {symbol} from Yahoo Finance...")
     yahoo_fundamentals = data_provider.get_company_fundamentals(symbol, provider='yahoo')

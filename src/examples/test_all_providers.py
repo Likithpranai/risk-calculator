@@ -2,33 +2,22 @@ import os
 import sys
 import pandas as pd
 from datetime import datetime, timedelta
-
-# Add parent directory to path to import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from data_providers.market_data_provider import MarketDataProvider
 
 def main():
-    """Test all market data providers with the provided API keys"""
-    
-    # Set API keys as environment variables
     os.environ['ALPHA_VANTAGE_API_KEY'] = 'A95HQUB5AWCRUQ1J'
     os.environ['POLYGON_API_KEY'] = 'HGaV6oKbB4mbuVEzhfhaKJPeEi8blmjn'
-    
-    # Create market data provider
     data_provider = MarketDataProvider()
-    
-    # Define symbols to fetch
     symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META']
-    single_symbol = 'AAPL'  # For testing providers with rate limits
+    single_symbol = 'AAPL' 
     
     print(f"Testing market data providers with {single_symbol} and {symbols}")
-    
-    # 1. Test Yahoo Finance
     print("\n===== TESTING YAHOO FINANCE =====")
     yahoo_data = data_provider.get_historical_prices(
         symbols=[single_symbol],
-        period='1mo',  # Use shorter period for test
+        period='1mo', 
         provider='yahoo'
     )
     
@@ -39,7 +28,6 @@ def main():
     else:
         print("No data retrieved from Yahoo Finance")
     
-    # 2. Test Alpha Vantage
     print("\n===== TESTING ALPHA VANTAGE =====")
     alpha_data = data_provider.get_historical_prices(
         symbols=[single_symbol],
@@ -53,7 +41,6 @@ def main():
     else:
         print("No data retrieved from Alpha Vantage")
     
-    # 3. Test Polygon
     print("\n===== TESTING POLYGON =====")
     end_date = datetime.now().strftime('%Y-%m-%d')
     start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
@@ -72,7 +59,6 @@ def main():
     else:
         print("No data retrieved from Polygon")
     
-    # 4. Test fundamentals from all providers
     print("\n===== TESTING FUNDAMENTALS =====")
     
     print("\nYahoo Finance Fundamentals:")

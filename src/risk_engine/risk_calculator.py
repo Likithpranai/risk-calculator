@@ -134,19 +134,8 @@ class RiskCalculator:
     def calculate_trade_risk_metrics(self,
                                    trade_data: pd.DataFrame,
                                    market_data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Calculate risk metrics for individual trades.
-        
-        Args:
-            trade_data: DataFrame with trade information
-            market_data: DataFrame with market data including returns
-            
-        Returns:
-            DataFrame with trade risk metrics
-        """
+
         start_time = time.time()
-        
-        # Prepare results dataframe
         results = trade_data.copy()
         
 
@@ -237,14 +226,9 @@ class RiskCalculator:
                 if 'DailyReturn' in market_data.columns:
                     returns_data[symbol] = market_data['DailyReturn'].values
         
-        # Calculate correlation matrix
         returns_df = pd.DataFrame(returns_data)
         correlation_matrix = returns_df.corr().values
-        
-        # Calculate covariance matrix
         covariance_matrix = returns_df.cov().values
-        
-        # Get position values in same order as correlation matrix
         position_values = []
         for symbol in returns_df.columns:
             position_value = portfolio_data[portfolio_data['Symbol'] == symbol]['Value'].sum()
