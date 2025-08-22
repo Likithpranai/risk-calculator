@@ -9,17 +9,13 @@ from concurrent.futures import ThreadPoolExecutor
 import os
 import sys
 
-
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 from config.config import DEFAULT_CONFIDENCE_LEVEL, USE_PARALLEL, MAX_THREADS
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class RiskCalculator:
-    
-    
     def __init__(self, confidence_level: float = DEFAULT_CONFIDENCE_LEVEL):
         self.confidence_level = confidence_level
         
@@ -28,11 +24,7 @@ class RiskCalculator:
                      value: float,
                      method: str = 'historical',
                      time_horizon: int = 1) -> float:
-            
-
         start_time = time.time()
-        
-
         returns = returns[~np.isnan(returns)]
         
         if len(returns) == 0:
@@ -79,7 +71,6 @@ class RiskCalculator:
             return 0.0
             
         if method == 'historical':
-            # Historical simulation method
             var_cutoff = np.percentile(returns, 100 * (1 - self.confidence_level))
             es = returns[returns <= var_cutoff].mean() * value * np.sqrt(time_horizon)
             
@@ -155,13 +146,11 @@ class RiskCalculator:
                 chunk_size = max(1, len(results) // MAX_THREADS)
                 chunks = [results.iloc[i:i+chunk_size] for i in range(0, len(results), chunk_size)]
                 
-
                 processed_chunks = list(executor.map(
                     lambda chunk: self._process_trade_chunk(chunk, market_data),
                     chunks
                 ))
                 
-
                 results = pd.concat(processed_chunks)
         else:
 
@@ -173,18 +162,15 @@ class RiskCalculator:
     def _process_trade_chunk(self, trade_chunk: pd.DataFrame, market_data: pd.DataFrame) -> pd.DataFrame:
         result_chunk = trade_chunk.copy()
         
-
         result_chunk['VaR_95'] = 0.0
         result_chunk['ES_95'] = 0.0
         result_chunk['Loss_Prob_5pct'] = 0.0
         result_chunk['Loss_Prob_10pct'] = 0.0
         
-
         for idx, trade in result_chunk.iterrows():
             symbol = trade['Symbol']
             value = trade['Value']
-            
-
+        
             if 'Symbol' in market_data.columns:
                 symbol_data = market_data[market_data['Symbol'] == symbol]
                 if len(symbol_data) == 0:
