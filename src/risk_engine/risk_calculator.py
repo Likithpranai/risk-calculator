@@ -11,7 +11,6 @@ import sys
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 from config.config import DEFAULT_CONFIDENCE_LEVEL, USE_PARALLEL, MAX_THREADS
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
